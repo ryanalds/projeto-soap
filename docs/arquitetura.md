@@ -29,8 +29,10 @@ O status indica em qual ronda de implementação cada parte entra.
 | `Aluno` | Domínio | Registro imutável (`record`) com matrícula, nome, curso e semestre | Ronda 2 |
 | `Situacao` | Domínio | Enum `APROVADO` / `RECUPERACAO` / `REPROVADO` | Ronda 2 |
 | `AlunoRepository` | Repositório | Guarda os alunos fixos em um `Map` em memória e busca por matrícula | Ronda 2 |
+| `Resultado` | Domínio | Registro com a média e a situação devolvidos por `calcularSituacao` | Ronda 2 |
+| `DadosInvalidosException` | Domínio | Exceção de entrada inválida ou entidade inexistente. Não tem nada de SOAP | Ronda 2 |
 | `SecretariaRegras` | Domínio | Lógica pura: valida matrícula e notas, calcula média e situação. Não conhece SOAP, por isso é testável com JUnit simples | Ronda 2 |
-| `DadosInvalidosException` | Contrato (ws) | Exceção de negócio anotada com `@WebFault`; vira um `soap:Fault` legível para o cliente | Ronda 3 |
+| `SecretariaFault` | Contrato (ws) | Exceção anotada com `@WebFault`; traduz a `DadosInvalidosException` do domínio em um `soap:Fault` legível para o cliente | Ronda 3 |
 | `AlunoDto` / `SituacaoDto` | Contrato (ws) | Classes simples que formam o XML do WSDL. Isolam o contrato do modelo interno (o JAXB não lida bem com `record`) | Ronda 3 |
 | `SecretariaService` | Contrato (ws) | Classe `@WebService` com as operações `consultarAluno` e `calcularSituacao`. Só recebe, delega às regras e converte para DTO | Ronda 3 |
 | `ServerMain` | Bootstrap | Monta o grafo (`repo → regras → service`) por construtor e chama `Endpoint.publish` | Ronda 3 |
@@ -64,7 +66,8 @@ Exemplo: `consultarAluno` com a matrícula `2024001`.
 ```
 matrícula "" ou "9999999"
    └─▶ SecretariaRegras lança DadosInvalidosException
-        └─▶ Metro converte a exceção (@WebFault) em <soap:Fault>
+        └─▶ SecretariaService a traduz para SecretariaFault (@WebFault)
+             └─▶ Metro converte em <soap:Fault>
              └─▶ cliente recebe faultcode "Client" + faultstring legível
 
 exceção inesperada (bug)
