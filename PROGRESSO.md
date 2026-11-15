@@ -1,6 +1,6 @@
 # Progresso
 
-Última atualização: 2026-11-14
+Última atualização: 2026-11-15 (ronda 5, parcial)
 
 ## Como trabalhamos
 
@@ -20,44 +20,53 @@
 | 1 | Estrutura, `pom.xml`, README, `.gitignore` | Concluída | `f058503` |
 | 1b | `SPEC.md` e `docs/arquitetura.md` | Concluída | `5ea3b4f` |
 | 2 | Domínio, repositório, regras e testes JUnit | Concluída (22 testes verdes) | `d84c1e5` |
-| 3 | DTOs, `SecretariaFault`, `SecretariaService`, `ServerMain`, WSDL | **Próxima** | — |
-| 4 | Cliente Python (zeep) | Pendente | — |
-| 5 | Projeto SoapUI, suite e documentação exportada | Pendente | — |
+| 3 | DTOs, `SecretariaFault`, `SecretariaService`, `ServerMain`, WSDL | Concluída, **não commitada** | — |
+| 4 | Cliente Python (zeep) | Concluída, **não commitada** | — |
+| 5 | Projeto SoapUI, suite e documentação exportada | **Parcial**: roteiro pronto (`soapui/ROTEIRO.md`); projeto depende do Ryan | — |
 
 ## Estado do código (`server-java/`)
 
-Pronto, em `edu.exemplo.secretaria`:
+Em `edu.exemplo.secretaria`:
 
 - `dominio/`: `Aluno`, `Situacao`, `Resultado`, `DadosInvalidosException`, `SecretariaRegras`
 - `repo/`: `AlunoRepository` (3 alunos fixos: `2024001`, `2024002`, `2024003`)
-- Teste: `SecretariaRegrasTest` (22 casos, incluindo limites 3,99 / 4 / 6,99 / 7)
+- `ws/`: `AlunoDto`, `SituacaoDto`, `SecretariaFault`, `SecretariaService`
+- `ServerMain`
+- Teste: `SecretariaRegrasTest` (22 casos, verdes)
 
-Ainda não existe: pacote `ws/` (só tem `.gitkeep`) e `ServerMain`. O projeto ainda não sobe servidor.
+Subir o servidor: `cd server-java && mvn exec:exec` (WSDL em `http://localhost:8080/secretaria?wsdl`).
+`wsdl/secretaria.wsdl` + `wsdl/secretaria.xsd` são cópias do contrato gerado.
 
-## Decisões tomadas
+## Verificado na Ronda 3 (servidor real, XML bruto via curl)
 
-- Escopo: 2 operações (`consultarAluno`, `calcularSituacao`); `listarDisciplinas` foi cortada.
-- Domínio imutável (`record`/`enum`); o contrato SOAP usa DTOs próprios, porque o JAXB não lida bem com `record`.
-- `DadosInvalidosException` fica no **domínio**, sem SOAP. A camada `ws/` a traduz para `SecretariaFault` (`@WebFault`).
-  Isso difere do `SPEC.md`, que ainda a coloca em `ws/` (seções 4 e 5). Ajustar o SPEC quando conveniente.
-- Metro `jaxws-rt` 4.0.3 (`jakarta.*`). Namespace: `http://secretaria.exemplo.edu/ws`.
-- Endpoint: `http://localhost:8080/secretaria` (WSDL em `?wsdl`).
+- WSDL document/literal wrapped, namespace e nomes conforme o SPEC; funciona com JDK 25 (sem precisar do JDK 17).
+- `consultarAluno` 2024001 → dados; matrícula vazia/inexistente → Fault `Client`.
+- `calcularSituacao`: 8 e 9 → 8.5 APROVADO; 5 e 5 → RECUPERACAO; 2 e 3 → REPROVADO; `nota1=11` → Fault `Client`.
+- Fault: HTTP 500, `faultcode=S:Client`, `faultstring` legível e `detail/SecretariaFault/message`.
 
-## Próximos passos (Ronda 3)
+## Armadilhas descobertas
 
-1. `ws/AlunoDto` e `ws/SituacaoDto` (classes simples; conversão na borda).
-2. `ws/SecretariaFault` (`@WebFault`) traduzindo `DadosInvalidosException`; faultcode `Client`.
-3. `ws/SecretariaService` (`@WebService`) com `targetNamespace`, `serviceName`, `portName` e `@WebParam(name=...)` explícitos.
-4. `ServerMain` montando `repo → regras → service` e chamando `Endpoint.publish`.
-5. Subir o servidor de verdade (`mvn exec:java`), conferir `?wsdl` e o XML bruto de uma chamada.
-6. Salvar `wsdl/secretaria.wsdl` e atualizar `docs/arquitetura.md`.
+- **`mvn exec:java` quebra Faults**: o classloader dele impede o JAXB de ser achado ao montar o fault (HTTP 500 vazio,
+  `ClassNotFoundException: org.glassfish.jaxb.runtime.v2.ContextFactory`). Por isso o pom usa `exec:exec` (JVM separada).
+- **Faultcode**: exceção `@WebFault` declarada sai sempre como `Server` no Metro. Para sair `Client`, a SEI lança
+  `SOAPFaultException` (via `SecretariaFault.clienteFault`) e mantém `throws SecretariaFault` só para o contrato.
+- No zsh, aspas na URL com `?wsdl` e cuidado com `pgrep -f`/`pkill -f`: casam com o próprio shell do comando.
 
-Risco principal: compatibilidade `jakarta` do Metro com o JDK 25. Se travar, testar com JDK 17 (via SDKMAN)
-antes de mexer no código.
+## Ronda 4 (cliente Python)
 
-## Depois da Ronda 3
+- `client-python/client.py` + `requirements.txt` (`zeep>=4.2`; testado com zeep 4.3.3, Python 3.15).
+- Rodar: `python3 -m venv .venv && .venv/bin/pip install -r requirements.txt && .venv/bin/python client.py [--xml]`
+  (com o servidor no ar). `--xml` imprime envelope de requisição e resposta.
+- Verificado de verdade: consulta válida, cálculo 8 e 9 → 8.5 APROVADO, e dois Faults (`S:Client`, matrícula
+  inexistente e `nota1=11`) capturados como `zeep.exceptions.Fault`.
 
-- Ronda 4: `client-python/client.py` com chamada válida e inválida, imprimindo o Fault.
-- Ronda 5: projeto SoapUI a partir do WSDL (suite da seção 7 do SPEC), salvo em `soapui/`.
-  O SoapUI precisa ser aberto pelo Ryan: o `.xml` do projeto é mais confiável se montado pela interface.
+## Ronda 5 (SoapUI) — parcial
+
+- O SoapUI **não está instalado** nesta máquina, então não gerei o `.xml` do projeto (não dá para validar sem abrir).
+- `soapui/ROTEIRO.md`: passo a passo, os 7 casos da suite com entradas, asserções e valores esperados (conferidos
+  no servidor real), e as armadilhas (filhos sem namespace, Faults com HTTP 500).
+- Falta o Ryan: montar a suite, rodar, salvar `soapui/secretaria-soapui-project.xml`, exportar documentação e prints.
+
+## Entrega
+
 - Entrega: justificativa SOAP vs REST (máx. 10 linhas), prints e checklist da seção 8 do SPEC.
