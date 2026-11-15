@@ -25,15 +25,16 @@ Qualidade acima de volume: poucas classes, cada uma com uma responsabilidade cla
 
 ## 3. Operações
 
-| Operação | Entrada | Saída | SOAP Fault (`Client`) |
+| Operação | Entrada | Saída | SOAP Fault |
 |---|---|---|---|
 | `consultarAluno` | `matricula` | `nome`, `curso`, `semestre` | matrícula em branco ou inexistente |
 | `calcularSituacao` | `matricula`, `disciplina`, `nota1`, `nota2` | `media`, `situacao` | nota fora de 0–10, matrícula inválida |
 
 Regra: `media = (nota1 + nota2) / 2`. `>= 7` APROVADO, `>= 4` RECUPERACAO, senão REPROVADO.
 
-Erros de negócio: `DadosInvalidosException` (domínio) vira `soap:Fault` `Client` com mensagem legível, e o detail `SecretariaFault` (`@WebFault`) fica declarado no WSDL.
-Exceção inesperada vira Fault `Server`.
+Erros de negócio: `DadosInvalidosException` (domínio) vira `SecretariaFault` (`@WebFault`, declarado no WSDL), que chega
+ao cliente como `soap:Fault` com a mensagem em `faultstring` e no `detail`. O faultcode é `Server`, o padrão do JAX-WS:
+preferimos o código simples a montar o Fault à mão só para trocar o código para `Client`.
 
 ## 4. Arquitetura
 

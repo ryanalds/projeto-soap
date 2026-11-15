@@ -11,7 +11,7 @@ public class ServerMain {
 
     public static void main(String[] args) {
         // repo -> regras -> service
-        var service = new SecretariaService(new SecretariaRegras(AlunoRepository.comDadosFicticios()));
+        var service = new SecretariaService(new SecretariaRegras(new AlunoRepository()));
         Endpoint.publish(URL, service);
         System.out.println("Servidor no ar. WSDL: " + URL + "?wsdl");
     }

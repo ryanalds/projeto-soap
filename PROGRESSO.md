@@ -20,8 +20,8 @@
 | 1 | Estrutura, `pom.xml`, README, `.gitignore` | Concluída | `f058503` |
 | 1b | `SPEC.md` e `docs/arquitetura.md` | Concluída | `5ea3b4f` |
 | 2 | Domínio, repositório, regras e testes JUnit | Concluída (22 testes verdes) | `d84c1e5` |
-| 3 | DTOs, `SecretariaFault`, `SecretariaService`, `ServerMain`, WSDL | Concluída, **não commitada** | — |
-| 4 | Cliente Python (zeep) | Concluída, **não commitada** | — |
+| 3 | DTOs, `SecretariaFault`, `SecretariaService`, `ServerMain`, WSDL | Concluída | `c7e3713` |
+| 4 | Cliente Python (zeep) | Concluída | `5c4955a` |
 | 5 | Projeto SoapUI, suite e documentação exportada | **Parcial**: roteiro pronto (`soapui/ROTEIRO.md`); projeto depende do Ryan | — |
 
 ## Estado do código (`server-java/`)
@@ -40,16 +40,16 @@ Subir o servidor: `cd server-java && mvn exec:exec` (WSDL em `http://localhost:8
 ## Verificado na Ronda 3 (servidor real, XML bruto via curl)
 
 - WSDL document/literal wrapped, namespace e nomes conforme o SPEC; funciona com JDK 25 (sem precisar do JDK 17).
-- `consultarAluno` 2024001 → dados; matrícula vazia/inexistente → Fault `Client`.
-- `calcularSituacao`: 8 e 9 → 8.5 APROVADO; 5 e 5 → RECUPERACAO; 2 e 3 → REPROVADO; `nota1=11` → Fault `Client`.
-- Fault: HTTP 500, `faultcode=S:Client`, `faultstring` legível e `detail/SecretariaFault/message`.
+- `consultarAluno` 2024001 → dados; matrícula vazia/inexistente → Fault.
+- `calcularSituacao`: 8 e 9 → 8.5 APROVADO; 5 e 5 → RECUPERACAO; 2 e 3 → REPROVADO; `nota1=11` → Fault.
+- Fault: HTTP 500, `faultcode=S:Server`, `faultstring` legível e `detail/SecretariaFault/message`.
 
 ## Armadilhas descobertas
 
 - **`mvn exec:java` quebra Faults**: o classloader dele impede o JAXB de ser achado ao montar o fault (HTTP 500 vazio,
   `ClassNotFoundException: org.glassfish.jaxb.runtime.v2.ContextFactory`). Por isso o pom usa `exec:exec` (JVM separada).
-- **Faultcode**: exceção `@WebFault` declarada sai sempre como `Server` no Metro. Para sair `Client`, a SEI lança
-  `SOAPFaultException` (via `SecretariaFault.clienteFault`) e mantém `throws SecretariaFault` só para o contrato.
+- **Faultcode**: exceção `@WebFault` declarada sai sempre como `Server` no Metro. Decisão (2026-11-15): aceitar `Server`
+  para manter o código simples; montar o Fault à mão só para trocar o código para `Client` não compensava.
 - No zsh, aspas na URL com `?wsdl` e cuidado com `pgrep -f`/`pkill -f`: casam com o próprio shell do comando.
 
 ## Ronda 4 (cliente Python)
@@ -57,7 +57,7 @@ Subir o servidor: `cd server-java && mvn exec:exec` (WSDL em `http://localhost:8
 - `client-python/client.py` + `requirements.txt` (`zeep>=4.2`; testado com zeep 4.3.3, Python 3.15).
 - Rodar: `python3 -m venv .venv && .venv/bin/pip install -r requirements.txt && .venv/bin/python client.py [--xml]`
   (com o servidor no ar). `--xml` imprime envelope de requisição e resposta.
-- Verificado de verdade: consulta válida, cálculo 8 e 9 → 8.5 APROVADO, e dois Faults (`S:Client`, matrícula
+- Verificado de verdade: consulta válida, cálculo 8 e 9 → 8.5 APROVADO, e dois Faults (matrícula
   inexistente e `nota1=11`) capturados como `zeep.exceptions.Fault`.
 
 ## Ronda 5 (SoapUI) — parcial
@@ -66,6 +66,15 @@ Subir o servidor: `cd server-java && mvn exec:exec` (WSDL em `http://localhost:8
 - `soapui/ROTEIRO.md`: passo a passo, os 7 casos da suite com entradas, asserções e valores esperados (conferidos
   no servidor real), e as armadilhas (filhos sem namespace, Faults com HTTP 500).
 - Falta o Ryan: montar a suite, rodar, salvar `soapui/secretaria-soapui-project.xml`, exportar documentação e prints.
+
+## Simplificação (2026-11-15, antes do SoapUI)
+
+Pedido do Ryan: código de baixa complexidade e fácil manutenção.
+- `SecretariaFault`: `@WebFault` padrão (sem `SOAPFactory`/`SOAPFaultException`). Faultcode passou a `Server`.
+- DTOs: campos públicos, sem getters nem anotações JAXB.
+- `AlunoRepository`: `Map.of` direto, construtor sem argumentos (sumiu `comDadosFicticios`).
+- `client.py`: script linear; sem argumento de URL, só `--xml`.
+- O WSDL/XSD gerados não mudaram (conferido por diff); testes e cliente rodados de novo.
 
 ## Entrega
 

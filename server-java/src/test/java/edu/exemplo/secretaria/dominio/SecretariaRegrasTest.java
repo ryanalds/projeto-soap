@@ -14,7 +14,7 @@ class SecretariaRegrasTest {
 
     private static final String MATRICULA = "2024001";
 
-    private final SecretariaRegras regras = new SecretariaRegras(AlunoRepository.comDadosFicticios());
+    private final SecretariaRegras regras = new SecretariaRegras(new AlunoRepository());
 
     @Test
     void consultaAlunoExistente() {

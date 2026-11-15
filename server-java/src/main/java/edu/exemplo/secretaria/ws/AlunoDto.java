@@ -1,23 +1,16 @@
 package edu.exemplo.secretaria.ws;
 
 import edu.exemplo.secretaria.dominio.Aluno;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 
-/** Contrato SOAP de {@code consultarAluno}. Classe simples porque o JAXB não lida bem com record. */
-@XmlAccessorType(XmlAccessType.FIELD)
+/** Resposta de consultarAluno. Classe simples (e não record) porque o JAXB precisa dela para gerar o XML. */
 public class AlunoDto {
 
-    private String matricula;
-    private String nome;
-    private String curso;
-    private int semestre;
+    public String matricula;
+    public String nome;
+    public String curso;
+    public int semestre;
 
-    public AlunoDto() {
-        // construtor sem argumentos exigido pelo JAXB
-    }
-
-    public static AlunoDto de(Aluno aluno) {
+    static AlunoDto de(Aluno aluno) {
         AlunoDto dto = new AlunoDto();
         dto.matricula = aluno.matricula();
         dto.nome = aluno.nome();
@@ -25,9 +18,4 @@ public class AlunoDto {
         dto.semestre = aluno.semestre();
         return dto;
     }
-
-    public String getMatricula() { return matricula; }
-    public String getNome() { return nome; }
-    public String getCurso() { return curso; }
-    public int getSemestre() { return semestre; }
 }

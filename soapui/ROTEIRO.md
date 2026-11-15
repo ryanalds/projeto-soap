@@ -39,7 +39,8 @@ Corpo de exemplo (SoapUI gera o Envelope; troque os `?`):
 - Só o elemento da operação e o de resposta têm namespace; `matricula`, `aluno`, `nome`, `resultado`, `media`...
   são **sem prefixo**. XPath certo: `//aluno/nome`. `//ws:aluno/ws:nome` não acha nada.
 - Os Faults voltam com **HTTP 500**. A asserção **SOAP Fault** os aceita; **Not SOAP Fault** é só para os casos válidos.
-- Os Faults são `faultcode=S:Client`; dá para checar com XPath `//faultcode` = `S:Client`.
+- Os Faults de negócio trazem o elemento `SecretariaFault` no `detail`; dá para checar com XPath
+  `//*[local-name()='SecretariaFault']/message` (o `faultcode` é `S:Server`, padrão do JAX-WS).
 - Evite `?` na asserção Contains com acentos mal digitados: copie o texto exatamente.
 
 ## 4. Conformidade e documentação

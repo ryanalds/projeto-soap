@@ -32,7 +32,7 @@ O status indica em qual ronda de implementação cada parte entra.
 | `Resultado` | Domínio | Registro com a média e a situação devolvidos por `calcularSituacao` | Ronda 2 |
 | `DadosInvalidosException` | Domínio | Exceção de entrada inválida ou entidade inexistente. Não tem nada de SOAP | Ronda 2 |
 | `SecretariaRegras` | Domínio | Lógica pura: valida matrícula e notas, calcula média e situação. Não conhece SOAP, por isso é testável com JUnit simples | Ronda 2 |
-| `SecretariaFault` | Contrato (ws) | Exceção `@WebFault` que declara o fault no WSDL. A SEI lança, na prática, um `SOAPFaultException` com o mesmo `detail` e `faultcode=Client` (o JAX-WS emitiria `Server` para a exceção declarada) | Ronda 3 |
+| `SecretariaFault` | Contrato (ws) | Exceção `@WebFault`: declara o fault no WSDL e o Metro a converte em `soap:Fault` com a mensagem legível | Ronda 3 |
 | `AlunoDto` / `SituacaoDto` | Contrato (ws) | Classes simples que formam o XML do WSDL. Isolam o contrato do modelo interno (o JAXB não lida bem com `record`) | Ronda 3 |
 | `SecretariaService` | Contrato (ws) | Classe `@WebService` com as operações `consultarAluno` e `calcularSituacao`. Só recebe, delega às regras e converte para DTO | Ronda 3 |
 | `ServerMain` | Bootstrap | Monta o grafo (`repo → regras → service`) por construtor e chama `Endpoint.publish` | Ronda 3 |
@@ -66,12 +66,12 @@ Exemplo: `consultarAluno` com a matrícula `2024001`.
 ```
 matrícula "" ou "9999999"
    └─▶ SecretariaRegras lança DadosInvalidosException
-        └─▶ SecretariaService a traduz (SecretariaFault.clienteFault) em SOAPFaultException
-             └─▶ Metro converte em <soap:Fault>
-             └─▶ cliente recebe faultcode "Client" + faultstring legível
+        └─▶ SecretariaService lança SecretariaFault (@WebFault) com a mesma mensagem
+             └─▶ Metro converte em <soap:Fault> (HTTP 500, faultcode "Server")
+             └─▶ cliente recebe faultstring legível + detail <SecretariaFault>
 
 exceção inesperada (bug)
-   └─▶ Metro devolve <soap:Fault> com faultcode "Server"
+   └─▶ Metro devolve <soap:Fault> sem o detail <SecretariaFault>
 ```
 
 ### Fluxo de `calcularSituacao`

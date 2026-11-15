@@ -29,7 +29,7 @@ public class SecretariaService {
         try {
             return AlunoDto.de(regras.consultarAluno(matricula));
         } catch (DadosInvalidosException e) {
-            throw SecretariaFault.clienteFault(e);
+            throw new SecretariaFault(e.getMessage());
         }
     }
 
@@ -43,7 +43,7 @@ public class SecretariaService {
         try {
             return SituacaoDto.de(regras.calcularSituacao(matricula, disciplina, nota1, nota2));
         } catch (DadosInvalidosException e) {
-            throw SecretariaFault.clienteFault(e);
+            throw new SecretariaFault(e.getMessage());
         }
     }
 }

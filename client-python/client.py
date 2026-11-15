@@ -1,7 +1,7 @@
-"""Cliente SOAP da Secretaria Acadêmica (zeep lê o WSDL; nenhum XML é montado à mão).
+"""Cliente SOAP da Secretaria Acadêmica. O zeep lê o WSDL e monta o XML sozinho.
 
-Uso: python client.py [URL_DO_WSDL]   (padrão: http://localhost:8080/secretaria?wsdl)
-Com --xml, imprime também o envelope bruto de cada chamada.
+Uso: python client.py          (com o servidor no ar)
+     python client.py --xml    (mostra também o envelope enviado e o recebido)
 """
 import sys
 
@@ -11,40 +11,27 @@ from zeep.exceptions import Fault
 from zeep.plugins import HistoryPlugin
 
 WSDL = "http://localhost:8080/secretaria?wsdl"
+MOSTRAR_XML = "--xml" in sys.argv
+
+historico = HistoryPlugin()
+servico = Client(WSDL, plugins=[historico]).service
 
 
-def mostrar_xml(historico):
-    for rotulo, msg in (("Request", historico.last_sent), ("Response", historico.last_received)):
-        if msg is None:
-            continue
-        xml = etree.tostring(msg["envelope"], pretty_print=True, encoding="unicode")
-        print(f"--- {rotulo} ---\n{xml}")
-
-
-def chamar(titulo, funcao, historico, mostrar, **args):
-    print(f"\n=== {titulo} {args}")
+def chamar(titulo, operacao, **parametros):
+    print(f"\n=== {titulo}")
     try:
-        print("OK:", funcao(**args))
+        print(operacao(**parametros))
     except Fault as fault:
-        # No SOAP, erro de negócio chega como Fault, não como código HTTP tratado pela aplicação
-        print(f"FAULT code={fault.code} message={fault.message!r}")
-    if mostrar:
-        mostrar_xml(historico)
+        # Erro de negócio chega como soap:Fault, que o zeep transforma em exceção
+        print(f"SOAP Fault: {fault.message}")
+    if MOSTRAR_XML:
+        for envelope in (historico.last_sent["envelope"], historico.last_received["envelope"]):
+            print(etree.tostring(envelope, pretty_print=True, encoding="unicode"))
 
 
-def main():
-    args = [a for a in sys.argv[1:] if a != "--xml"]
-    mostrar = "--xml" in sys.argv
-    historico = HistoryPlugin()
-    servico = Client(args[0] if args else WSDL, plugins=[historico]).service
-
-    chamar("consultarAluno válido", servico.consultarAluno, historico, mostrar, matricula="2024001")
-    chamar("calcularSituacao válido", servico.calcularSituacao, historico, mostrar,
-           matricula="2024001", disciplina="Banco de Dados", nota1=8, nota2=9)
-    chamar("consultarAluno inexistente", servico.consultarAluno, historico, mostrar, matricula="9999999")
-    chamar("calcularSituacao nota inválida", servico.calcularSituacao, historico, mostrar,
-           matricula="2024001", disciplina="Banco de Dados", nota1=11, nota2=9)
-
-
-if __name__ == "__main__":
-    main()
+chamar("Consulta válida", servico.consultarAluno, matricula="2024001")
+chamar("Cálculo válido", servico.calcularSituacao,
+       matricula="2024001", disciplina="Banco de Dados", nota1=8, nota2=9)
+chamar("Matrícula inexistente", servico.consultarAluno, matricula="9999999")
+chamar("Nota fora da faixa", servico.calcularSituacao,
+       matricula="2024001", disciplina="Banco de Dados", nota1=11, nota2=9)
