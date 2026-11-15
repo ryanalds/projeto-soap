@@ -32,7 +32,7 @@ Qualidade acima de volume: poucas classes, cada uma com uma responsabilidade cla
 
 Regra: `media = (nota1 + nota2) / 2`. `>= 7` APROVADO, `>= 4` RECUPERACAO, senão REPROVADO.
 
-Erros de negócio: `DadosInvalidosException` (`@WebFault`) vira `soap:Fault` com mensagem legível.
+Erros de negócio: `DadosInvalidosException` (domínio) vira `soap:Fault` `Client` com mensagem legível, e o detail `SecretariaFault` (`@WebFault`) fica declarado no WSDL.
 Exceção inesperada vira Fault `Server`.
 
 ## 4. Arquitetura
@@ -60,8 +60,8 @@ projeto-soap/
 │   ├── pom.xml
 │   └── src/{main,test}/java/edu/exemplo/secretaria/
 │       ├── ServerMain.java
-│       ├── ws/        SecretariaService.java, AlunoDto.java, SituacaoDto.java, DadosInvalidosException.java
-│       ├── dominio/   Aluno.java, Situacao.java, SecretariaRegras.java
+│       ├── ws/        SecretariaService.java, AlunoDto.java, SituacaoDto.java, SecretariaFault.java
+│       ├── dominio/   Aluno.java, Situacao.java, Resultado.java, DadosInvalidosException.java, SecretariaRegras.java
 │       └── repo/      AlunoRepository.java
 ├── client-python/     client.py, requirements.txt
 ├── wsdl/              secretaria.wsdl

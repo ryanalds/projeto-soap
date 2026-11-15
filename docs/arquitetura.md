@@ -25,14 +25,14 @@ O status indica em qual ronda de implementação cada parte entra.
 
 | Parte | Camada | Para que serve | Status |
 |---|---|---|---|
-| `pom.xml` | Build | Declara Java 17, Metro `jaxws-rt` (JAX-WS não vem no JDK 11+), JUnit 5 e o `exec:java` que sobe o servidor | Ronda 1 |
+| `pom.xml` | Build | Declara Java 17, Metro `jaxws-rt` (JAX-WS não vem no JDK 11+), JUnit 5 e o `exec:exec` que sobe o servidor | Ronda 1 |
 | `Aluno` | Domínio | Registro imutável (`record`) com matrícula, nome, curso e semestre | Ronda 2 |
 | `Situacao` | Domínio | Enum `APROVADO` / `RECUPERACAO` / `REPROVADO` | Ronda 2 |
 | `AlunoRepository` | Repositório | Guarda os alunos fixos em um `Map` em memória e busca por matrícula | Ronda 2 |
 | `Resultado` | Domínio | Registro com a média e a situação devolvidos por `calcularSituacao` | Ronda 2 |
 | `DadosInvalidosException` | Domínio | Exceção de entrada inválida ou entidade inexistente. Não tem nada de SOAP | Ronda 2 |
 | `SecretariaRegras` | Domínio | Lógica pura: valida matrícula e notas, calcula média e situação. Não conhece SOAP, por isso é testável com JUnit simples | Ronda 2 |
-| `SecretariaFault` | Contrato (ws) | Exceção anotada com `@WebFault`; traduz a `DadosInvalidosException` do domínio em um `soap:Fault` legível para o cliente | Ronda 3 |
+| `SecretariaFault` | Contrato (ws) | Exceção `@WebFault` que declara o fault no WSDL. A SEI lança, na prática, um `SOAPFaultException` com o mesmo `detail` e `faultcode=Client` (o JAX-WS emitiria `Server` para a exceção declarada) | Ronda 3 |
 | `AlunoDto` / `SituacaoDto` | Contrato (ws) | Classes simples que formam o XML do WSDL. Isolam o contrato do modelo interno (o JAXB não lida bem com `record`) | Ronda 3 |
 | `SecretariaService` | Contrato (ws) | Classe `@WebService` com as operações `consultarAluno` e `calcularSituacao`. Só recebe, delega às regras e converte para DTO | Ronda 3 |
 | `ServerMain` | Bootstrap | Monta o grafo (`repo → regras → service`) por construtor e chama `Endpoint.publish` | Ronda 3 |
@@ -41,7 +41,7 @@ O status indica em qual ronda de implementação cada parte entra.
 
 | Parte | Para que serve | Status |
 |---|---|---|
-| `wsdl/secretaria.wsdl` | Cópia versionada do contrato gerado, para consulta e conferência | Ronda 3 |
+| `wsdl/secretaria.wsdl` + `secretaria.xsd` | Cópia versionada do contrato gerado; o `schemaLocation` aponta para o `.xsd` local | Ronda 3 |
 | `client-python/client.py` | Consome o serviço pelo WSDL (zeep): uma chamada válida e uma inválida, imprimindo o Fault | Ronda 4 |
 | `soapui/` | Projeto SoapUI com a suite de testes e a documentação exportada | Ronda 5 |
 | `SPEC.md` | Escopo, decisões e critérios de aceite | Ronda 1 |
@@ -66,7 +66,7 @@ Exemplo: `consultarAluno` com a matrícula `2024001`.
 ```
 matrícula "" ou "9999999"
    └─▶ SecretariaRegras lança DadosInvalidosException
-        └─▶ SecretariaService a traduz para SecretariaFault (@WebFault)
+        └─▶ SecretariaService a traduz (SecretariaFault.clienteFault) em SOAPFaultException
              └─▶ Metro converte em <soap:Fault>
              └─▶ cliente recebe faultcode "Client" + faultstring legível
 

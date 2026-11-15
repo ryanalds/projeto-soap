@@ -41,13 +41,19 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.2.5</version>
             </plugin>
-            <!-- mvn exec:java sobe o servidor -->
+            <!-- mvn exec:exec sobe o servidor. exec:java não serve: o classloader dele impede o
+                 JAXB de ser achado ao montar SOAP Faults (HTTP 500 sem corpo). -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.2.0</version>
                 <configuration>
-                    <mainClass>${main.class}</mainClass>
+                    <executable>java</executable>
+                    <arguments>
+                        <argument>-classpath</argument>
+                        <classpath/>
+                        <argument>${main.class}</argument>
+                    </arguments>
                 </configuration>
             </plugin>
         </plugins>
