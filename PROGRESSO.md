@@ -69,4 +69,5 @@ Subir o servidor: `cd server-java && mvn exec:exec` (WSDL em `http://localhost:8
 
 ## Entrega
 
-- Entrega: justificativa SOAP vs REST (máx. 10 linhas), prints e checklist da seção 8 do SPEC.
+- Feito: `docs/soap-vs-rest.md` (7 linhas), README atualizado e checklist do SPEC marcado, exceto a suite SoapUI.
+- Falta (Ryan): suite SoapUI verde + documentação exportada + prints (ver `soapui/ROTEIRO.md`).

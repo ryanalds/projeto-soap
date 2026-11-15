@@ -21,11 +21,11 @@ validado no SoapUI. Escopo e arquitetura em [`SPEC.md`](SPEC.md).
 
 ## Como executar
 
-Servidor (a partir da Ronda 3):
+Servidor:
 
 ```
 cd server-java
-mvn exec:java
+mvn exec:exec
 ```
 
 - Endpoint: <http://localhost:8080/secretaria>
@@ -37,3 +37,14 @@ Testes unitários:
 cd server-java
 mvn test
 ```
+
+Cliente Python (com o servidor no ar; `--xml` mostra os envelopes):
+
+```
+cd client-python
+python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+.venv/bin/python client.py [--xml]
+```
+
+Testes no SoapUI: siga [`soapui/ROTEIRO.md`](soapui/ROTEIRO.md).
+Justificativa da escolha SOAP: [`docs/soap-vs-rest.md`](docs/soap-vs-rest.md).

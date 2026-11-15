@@ -92,11 +92,11 @@ projeto-soap/
 
 ## 8. Critérios de aceite
 
-- [ ] Servidor Java no ar, WSDL acessível por URL, ≥ 2 operações
-- [ ] Cliente Python consumindo; chamada válida e inválida (Fault) demonstradas
-- [ ] Envelope/Body/namespaces conferidos no XML bruto
+- [x] Servidor Java no ar, WSDL acessível por URL, ≥ 2 operações
+- [x] Cliente Python consumindo; chamada válida e inválida (Fault) demonstradas
+- [x] Envelope/Body/namespaces conferidos no XML bruto
 - [ ] Suite SoapUI verde + documentação exportada
-- [ ] Commits mostrando a evolução
+- [x] Commits mostrando a evolução
 
 ## 9. Riscos técnicos
 
