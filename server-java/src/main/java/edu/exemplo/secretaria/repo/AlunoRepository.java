@@ -5,7 +5,7 @@ import edu.exemplo.secretaria.dominio.Aluno;
 import java.util.Map;
 import java.util.Optional;
 
-/** Repositório em memória com alunos fixos, indexado por matrícula. */
+//Repositório em memória com alunos por matrícula.
 public class AlunoRepository {
 
     private final Map<String, Aluno> alunos = Map.of(

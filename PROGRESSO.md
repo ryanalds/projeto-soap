@@ -62,7 +62,9 @@ Subir o servidor: `cd server-java && mvn exec:exec` (WSDL em `http://localhost:8
 
 ## Ronda 5 (SoapUI) — parcial
 
-- O SoapUI **não está instalado** nesta máquina, então não gerei o `.xml` do projeto (não dá para validar sem abrir).
+- SoapUI Open Source 5.8.0 instalado em `~/opt/SoapUI-5.8.0` (abrir com `bin/soapui.sh`).
+- Decisão (2026-11-15): o projeto é montado pelo Ryan na interface; o Claude só confere o `.xml` salvo e roda o
+  `testrunner.sh` (gerar o projeto por script foi bloqueado pelo modo de permissão).
 - `soapui/ROTEIRO.md`: passo a passo, os 7 casos da suite com entradas, asserções e valores esperados (conferidos
   no servidor real), e as armadilhas (filhos sem namespace, Faults com HTTP 500).
 - Falta o Ryan: montar a suite, rodar, salvar `soapui/secretaria-soapui-project.xml`, exportar documentação e prints.
