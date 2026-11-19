@@ -6,9 +6,7 @@ O projeto `.xml` do SoapUI deve ser montado pela interface e salvo nesta pasta.
 ## 1. Preparar
 
 1. Subir o servidor: `cd server-java && mvn exec:exec`.
-2. SoapUI: **File > New SOAP Project**, WSDL `http://localhost:8080/secretaria?wsdl`
-   (ou `wsdl/secretaria.wsdl`), marcar **Create sample requests** e **Create TestSuite**.
-   Nome sugerido: `Secretaria`.
+2. SoapUI: `~/opt/SoapUI-5.8.0/bin/soapui.sh`.
 3. Ver o WSDL no SoapUI: binding `SecretariaPortBinding`, operações `consultarAluno` e `calcularSituacao`.
 
 ## 2. Test suite (um TestCase por linha; step "SOAP Request")
